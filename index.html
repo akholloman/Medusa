@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>MEDUSA</title>
+
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	</head>
+	<body>
+		<div class="container">
+			<h1>YEEEEEE</h1>
+			<p>This is <span id="sp">_</span> cool.</p>
+			<div class="input-group mb-3">
+				<input id="search" type="text" class="form-control" placeholder="Search Track" aria-label="Search Track" aria-describedby="basic-addon2">
+				<div class="input-group-append">
+					<button class="btn btn-outline-secondary" type="button" onclick="search()">Search</button>
+				</div>
+			</div>
+			<iframe src="https://open.spotify.com/embed?uri=__URL__" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+		</div>
+	</body>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		var socket = io();
+
+		socket.on("updateUnderscore", (data) => {
+			document.getElementById("sp").innerHTML = data;
+		});
+
+		socket.on("searchResults", (results) => {
+			console.log(results);
+		});
+
+		const search = () => {
+			let track = document.getElementById("search").value;
+			socket.emit("search", track);
+		};
+	</script>
+</html>
