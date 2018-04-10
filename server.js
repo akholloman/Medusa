@@ -86,7 +86,7 @@ server.on("/openbci", (sample, rinfo) => {
 
 // Set up spotify
 const scopes = ['playlist-modify-private'];
-const stateKey = "__THIS IS THE COOKIE__";
+const stateKey = "__MEDUSA_COOKIE__";
 let spotify = new spotify_api({
 	clientId: config.spotify.ID,
 	clientSecret: config.spotify.SECRET,
