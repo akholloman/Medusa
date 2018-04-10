@@ -79,7 +79,7 @@ server.on("/openbci", (sample, rinfo) => {
 			}
 
 			let avg = sliding[channel].lm.reduce((acc, cur) => acc + cur) / sliding[channel].lm.length;
-			sliding[channel].fd = Math.log(avg) / -1 * Math.log(t);
+			sliding[channel].fd = Math.log(avg) / (-1 * Math.log(t));
 		}
 	});
 });
