@@ -152,11 +152,7 @@ io.on("connection", (socket) => {
 		socket.on("playing", state => {
 			// Just started playing, get ready to queue
 			if (!playing && state) {
-				console.log("QUEUE TIMEOUT:", global_next, ":", Math.floor(global_next.duration_ms * 0.9));
-				setTimeout(queue, Math.floor(global_next.duration_ms * 0.85));
-				setTimeout(() => {play(); socket.emit("target", global_next);}, global_next.duration_ms + 10);
-
-				socket.emit("target", global_next);
+				getReady(socket);
 			}
 
 			playing = state;
@@ -167,6 +163,17 @@ io.on("connection", (socket) => {
 http.listen(config.http.PORT, config.http.HOST, () => {
 	console.log("Server running on: " + config.http.HOST + ":" + config.http.PORT);
 });
+
+function getReady(socket) {
+	console.log("QUEUE TIMEOUT:", global_next, ":", Math.floor(global_next.duration_ms * 0.9));
+	setTimeout(queue, Math.floor(global_next.duration_ms * 0.85));
+	setTimeout(() => {
+		play();
+		getReady(socket);
+	}, global_next.duration_ms + 10);
+
+	socket.emit("target", global_next);
+}
 
 function play(cb) {
 	spotify.play({device_id: player_id, context_uri: myPlaylist.uri, offset: offset}).then(data => {
