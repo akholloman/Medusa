@@ -77,7 +77,7 @@ function _analyzeSample(sample) {
 						if (ind === 0) return 0;
 
 						return acc + Math.abs(cur - s[ind - 1])
-					})) * ((N - 1) / (((N - _m) / k) * k))) / k
+					}, 0)) * ((N - 1) / (((N - _m) / k) * k))) / k
 				);
 			}
 

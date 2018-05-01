@@ -86,7 +86,10 @@ app.use((req, res) => {
 });
 
 // Set up socket.io
-let user_id = null, myPlaylist = {}, nextHandler, bci_data;
+let user_id = null, 
+	myPlaylist = {}, 
+	nextHandler, 
+	bci_data = {valence: 0, arousal: 0};
 io.on("connection", (socket) => {
 	console.log("User connected");
 
@@ -224,7 +227,7 @@ function _refresh(pl, cb) {
 			return {
 				id: x.track.id,
 				uri: x.track.uri,
-				image_url: x.track.album.images[0].url,
+				image_url: (x.track.album.images ? x.track.album.images[0].url : ""),
 				duration_ms: x.track.duration_ms,
 				name: x.track.name,
 				album: x.track.album.name,
