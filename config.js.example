@@ -1,0 +1,17 @@
+module.exports = {
+	http: {
+		PORT: 8888,
+		HOST: "localhost"
+	},
+
+	osc: {
+		PORT: 12345,
+		HOST: "localhost"
+	},
+
+	spotify: {
+		ID: "SPOTIFY_ID",
+		SECRET: "SPOTIFY_SECRET",
+		REDIRECT: "SPOTIFY_REDIRECT"
+	}
+}

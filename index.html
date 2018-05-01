@@ -7,35 +7,154 @@
 		<title>MEDUSA</title>
 
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<link rel="stylesheet" href="/css/main.css">
 	</head>
 	<body>
-		<div class="container">
-			<h1>YEEEEEE</h1>
-			<p>This is <span id="sp">_</span> cool.</p>
-			<div class="input-group mb-3">
-				<input id="search" type="text" class="form-control" placeholder="Search Track" aria-label="Search Track" aria-describedby="basic-addon2">
-				<div class="input-group-append">
-					<button class="btn btn-outline-secondary" type="button" onclick="search()">Search</button>
-				</div>
+		<div class="container mb-2">
+			<h1>MEDUSA</h1>
+			<h2 id="track-info"></h2>
+			<div class="spotify-container">
+				<img id="cover-art" src="" class="rounded mx-auto d-block main-image" alt="Cover Art">
+				<a id="play-button" class="play on-top" title="Start MEDUSA"></a>
 			</div>
-			<iframe src="https://open.spotify.com/embed?uri=__URL__" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+		</div>
+		<div class="container">
+			<div id="data">
+				<!-- Handled by plotly.js -->
+			</div>
 		</div>
 	</body>
+
+	<!-- Scripts -->
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<script src="https://sdk.scdn.co/spotify-player.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 	<script>
 		var socket = io();
+		var ready = false;
+		var player;
 
-		socket.on("updateUnderscore", (data) => {
-			document.getElementById("sp").innerHTML = data;
+		var img = document.getElementById("cover-art");
+		var icon = document.getElementById("play-button");
+		var info = document.getElementById("track-info");
+		img.crossOrigin = 'Anonymous';
+
+		var playing = false;
+		icon.onclick = function() {
+			icon.classList.toggle('active');
+			socket.emit("toggle");
+
+			playing = !playing;
+			return false;
+		};
+
+		// Plotly handler
+		var target = {
+			x: [0],
+			y: [0],
+			mode: "markers",
+			type: "scatter",
+			name: "Target",
+			marker: {size: 12}
+		};
+		var state = {
+			x: [0],
+			y: [0],
+			mode: "markers",
+			type: "scatter",
+			name: "You",
+			marker: {size: 12}
+		};
+
+		var layout = {
+			shapes: [null, {
+				type: "rect",
+				xref: "x",
+				yref: "y",
+				x0: 0.5,
+				y0: 0,
+				x1: 1,
+				y1: 0.5,
+				fillcolor: "#3cb371",
+				opacity: 0.2,
+				line: {
+					width: 0
+				}
+			}],
+			xaxis: {
+				range: [0, 1],
+				title: 'Valence'
+			},
+			yaxis: { range: [0, 1] },
+			title:'Valence vs. Arousal'
+		};
+		Plotly.newPlot("data", [target, state], layout);
+		
+		socket.on("target", data => {
+			console.log("TARGET: ", data);
+			info.innerHTML = data.album + ": " + data.name + " (" + data.artist + ")";
+			target.x[0] = data.valence;
+			target.y[0] = data.arousal;
+
+			layout.shapes[0] = {
+				type: 'circle',
+				xref: 'x',
+				yref: 'y',
+				x0: data.valence - 0.05,
+				y0: data.arousal - 0.05,
+				x1: data.valence + 0.05,
+				y1: data.arousal + 0.05,
+				opacity: 1,
+				line: {
+					color: 'blue'
+				}
+			};
+
+			Plotly.update("data", [target, state], layout);
+		});
+		socket.on("bci", data => {
+			state.x[0] = data.valence;
+			state.y[0] = data.arousal;
+
+			Plotly.update("data", [target, state], layout);
 		});
 
-		socket.on("searchResults", (results) => {
-			console.log(results);
-		});
+		// Connect to the player!
+		socket.on("token", token => {
+			if (ready) {
+				player = new Spotify.Player({
+					name: 'MEDUSA: BCI Easy Listening',
+					getOAuthToken: cb => { cb(token); }
+				});
 
-		const search = () => {
-			let track = document.getElementById("search").value;
-			socket.emit("search", track);
+				// Error handling
+				player.addListener('initialization_error', ({ message }) => { console.error(message); });
+				player.addListener('authentication_error', ({ message }) => { console.error(message); });
+				player.addListener('account_error', ({ message }) => { console.error(message); });
+				player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+				// Playback status updates
+				player.addListener('player_state_changed', state => {
+					if (!state) return;
+					console.log(state);
+
+					var _url = state.track_window.current_track.album.images[0].url;
+					if (img.src != _url) img.src = _url;
+
+					socket.emit("playing", !state.paused);
+				});
+
+				// Ready
+				player.addListener('ready', ({ device_id }) => {
+					console.log('Ready with Device ID', device_id);
+					socket.emit("id", device_id);
+				});
+
+				player.connect();
+			}
+		});
+		window.onSpotifyWebPlaybackSDKReady = () => {
+			ready = true;
 		};
 	</script>
 </html>
