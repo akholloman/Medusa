@@ -135,7 +135,8 @@ io.on("connection", (socket) => {
 			console.log("PLAY_STATE: ", playing, ":", player_id);
 			if (playing) {
 				spotify.pause({device_id: player_id}).then(data => {
-					console.log("Paused");
+					console.log("Stopped");
+					offset = {position: offset.position - 1};
 				}, err => {
 					console.error("PAUSE_ERROR: ", err);
 				});
